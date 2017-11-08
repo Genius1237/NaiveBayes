@@ -7,15 +7,15 @@
 
 using namespace std;
 
-NaiveBayes::NaiveBayes() {
+NaiveBayesClassifier::NaiveBayesClassifier() {
 	;
 }
 
-NaiveBayes::NaiveBayes(
+NaiveBayesClassifier::NaiveBayesClassifier(
 	int neg_max, int pos_min, const string& train_bow_file, 
 	const string& vocab_file, const string& sw_file = "") {
 
-	// set a few private variables
+	// set some of the private variables
 	pos_reviews = 0;
 	neg_reviews = 0;
 	this -> neg_max = neg_max;
@@ -26,16 +26,18 @@ NaiveBayes::NaiveBayes(
 		omit_sw = true;
 	}
 	vocab_words = readWords(vocab_file);
-	ll num_words = vocab_words.size();
+	ll vocab_size = vocab_words.size();
 
+	// Used to store word frequency
 	// words_freq[0].first - without binarization 
 	// words_freq[0].second - with binarization
 	//                    .first - freq in positive reviews
 	//									  .second -  freq in negative reviews
 	vector<pair<pair<ll, ll>, pair<ll, ll>>> words_freq;
+	
 	// setup words_freq and words_prob
-	words_freq.resize(num_words);
-	words_prob.resize(num_words);
+	words_freq.resize(vocab_size);
+	words_prob.resize(vocab_size);
 	for (auto& word_info: words_freq) {
 		word_info.first.first = 0;
 		word_info.first.second = 0;
@@ -50,7 +52,6 @@ NaiveBayes::NaiveBayes(
 		exit(0);
 	}
 	string line;
-	ll vocab_size = 0;
 	ll pos_wobin_freq = 0, neg_wobin_freq = 0, pos_wbin_freq = 0, neg_wbin_freq = 0; // total word frequencies
 
 	// process each bow review in one iteration
@@ -73,7 +74,7 @@ NaiveBayes::NaiveBayes(
 			exit(0);
 		}
 
-		// process the words encoded as bow
+		// process the words encoded as bow and populate words_freq
 		ll a, b;
 		char discard;
 		while (!ss.eof()) {
@@ -101,16 +102,15 @@ NaiveBayes::NaiveBayes(
 	in.close();
 
 	// populate words_prob
-	for (ll i = 0; i < num_words; i++) {
-		words_prob[i].first.first = (1.0 + words_freq[i].first.first) / (pos_wobin_freq + num_words);
-		words_prob[i].first.second = (1.0 + words_freq[i].first.second) / (neg_wobin_freq + num_words);
-		words_prob[i].second.first = (1.0 + words_freq[i].second.first) / (pos_wbin_freq + num_words);
-		words_prob[i].second.second = (1.0 + words_freq[i].second.second) / (neg_wbin_freq + num_words);
-		//cout << words_prob[i].first.first << ","<< words_prob[i].first.second << endl;
+	for (ll i = 0; i < vocab_size; i++) {
+		words_prob[i].first.first = (1.0 + words_freq[i].first.first) / (pos_wobin_freq + vocab_size);
+		words_prob[i].first.second = (1.0 + words_freq[i].first.second) / (neg_wobin_freq + vocab_size);
+		words_prob[i].second.first = (1.0 + words_freq[i].second.first) / (pos_wbin_freq + vocab_size);
+		words_prob[i].second.second = (1.0 + words_freq[i].second.second) / (neg_wbin_freq + vocab_size);
 	}
 }
 
-void NaiveBayes::test(const string& test_bow_file, bool use_bin) {
+void NaiveBayesClassifier::test(const string& test_bow_file, bool use_bin) {
 	ifstream in(test_bow_file);
 	if (!in.is_open()) {
 		cerr << "File opening failed\n";
@@ -119,7 +119,9 @@ void NaiveBayes::test(const string& test_bow_file, bool use_bin) {
 
 	ll tp = 0, fp = 0, fn = 0, tn = 0;
 	string line;
+	// consider one review in each iteration
 	while (getline(in, line)) {
+		// obtain the sentiment of the review
 		ll rating;
 		stringstream ss;
 		ss.str(line);
@@ -133,6 +135,8 @@ void NaiveBayes::test(const string& test_bow_file, bool use_bin) {
 			cerr << "Unexpected Neutral: " << rating << "\n";
 			exit(0);
 		}
+
+		// classify the instance
 		if (classify(ss, use_bin)) {
 			if (is_pos) {
 				++tp;
@@ -147,16 +151,17 @@ void NaiveBayes::test(const string& test_bow_file, bool use_bin) {
 			}
 		}
 	}
-
 	in.close();
 
-	cout << "Accuracy: " << ((tp + tn + 0.0) / (tp + tn + fp + fn)) * 100 << "%\n";
-	cout << "Precision: " << (tp + 0.0) / (tp + fp) << "\n";
-	cout << "Recall: " << (tp + 0.0) / (tp + fn) << "\n";
-	cout << "F1 Measure: " << (2.0 * tp) / (2 * tp + fp + fn) << "\n";
+	// print statistics
+	cout << fixed << setprecision(4)
+	<< "Accuracy: " << ((tp + tn + 0.0) / (tp + tn + fp + fn)) * 100 << "%\n"
+	<< "Precision: " << (tp + 0.0) / (tp + fp) << "\n"
+	<< "Recall: " << (tp + 0.0) / (tp + fn) << "\n"
+	<< "F1 Measure: " << (2.0 * tp) / (2 * tp + fp + fn) << "\n";
 }
 
-vector<string> NaiveBayes::readWords(const string& sw_file) {
+vector<string> NaiveBayesClassifier::readWords(const string& sw_file) {
 	ifstream fin(sw_file,ios::in);
 	vector<string> data;
 
@@ -169,10 +174,11 @@ vector<string> NaiveBayes::readWords(const string& sw_file) {
 	return data;
 }
 
-bool NaiveBayes::classify(stringstream& ss, bool use_bin) {
-
+bool NaiveBayesClassifier::classify(stringstream& bow_review_instance, bool use_bin) {
+	stringstream& ss = bow_review_instance;
 	ld pos_prob = log(static_cast<ld>(pos_reviews) / (pos_reviews + neg_reviews));
 	ld neg_prob = log(static_cast<ld>(neg_reviews) / (pos_reviews + neg_reviews));
+	
 	ll a, b;
 	char discard;
 	while (!ss.eof()) {
@@ -180,6 +186,8 @@ bool NaiveBayes::classify(stringstream& ss, bool use_bin) {
 		ss.get(discard);
 		ss >> b;
 		ss.get(discard);
+		
+		// skip if this is a stopword
 		if (omit_sw && binary_search(stop_words.begin(), stop_words.end(), vocab_words[a])) {
 			continue;
 		}
