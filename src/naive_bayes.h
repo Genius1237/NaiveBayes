@@ -76,7 +76,7 @@ private:
 	// Minimum rating to be considered as a positive sentiment
 	int pos_min;
 	
-	// true if stopwords are omitted
+	// true if stopwords should be omitted
 	bool omit_sw;
 };
 
