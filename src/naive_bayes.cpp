@@ -28,6 +28,11 @@ NaiveBayes::NaiveBayes(
 	vocab_words = readWords(vocab_file);
 	ll num_words = vocab_words.size();
 
+	// words_freq[0].first - without binarization 
+	// words_freq[0].second - with binarization
+	//                    .first - freq in positive reviews
+	//									  .second -  freq in negative reviews
+	vector<pair<pair<ll, ll>, pair<ll, ll>>> words_freq;
 	// setup words_freq and words_prob
 	words_freq.resize(num_words);
 	words_prob.resize(num_words);
@@ -47,12 +52,6 @@ NaiveBayes::NaiveBayes(
 	string line;
 	ll vocab_size = 0;
 	ll pos_wobin_freq = 0, neg_wobin_freq = 0, pos_wbin_freq = 0, neg_wbin_freq = 0; // total word frequencies
-	
-	// words_freq[0].first - without binarization 
-	// words_freq[0].second - with binarization
-	//                    .first - freq in positive reviews
-	//									  .second -  freq in negative reviews
-	vector<pair<pair<ll, ll>, pair<ll, ll>>> words_freq;
 
 	// process each bow review in one iteration
 	while (getline(in, line)) {
@@ -118,18 +117,43 @@ void NaiveBayes::test(const string& test_bow_file, bool use_bin) {
 		exit(0);
 	}
 
-	ll correct = 0, wrong = 0;
+	ll tp = 0, fp = 0, fn = 0, tn = 0;
 	string line;
 	while (getline(in, line)) {
-		if (singleTest(line, use_bin)) {
-			++correct;
+		ll rating;
+		stringstream ss;
+		ss.str(line);
+		ss >> rating;
+		bool is_pos;
+		if (rating <= neg_max) {
+			is_pos = false;
+		} else if (rating >= pos_min) {
+			is_pos = true;
 		} else {
-			++wrong;
+			cerr << "Unexpected Neutral: " << rating << "\n";
+			exit(0);
+		}
+		if (classify(ss, use_bin)) {
+			if (is_pos) {
+				++tp;
+			} else {
+				++fp;
+			}
+		} else {
+			if (is_pos) {
+				++fn;
+			} else {
+				++tn;
+			}
 		}
 	}
 
 	in.close();
-	cout << "Accuracy: " << fixed << setprecision(4) << (correct * 100.0) / (correct + wrong) << "\n";
+
+	cout << "Accuracy: " << ((tp + tn + 0.0) / (tp + tn + fp + fn)) * 100 << "%\n";
+	cout << "Precision: " << (tp + 0.0) / (tp + fp) << "\n";
+	cout << "Recall: " << (tp + 0.0) / (tp + fn) << "\n";
+	cout << "F1 Measure: " << (2.0 * tp) / (2 * tp + fp + fn) << "\n";
 }
 
 vector<string> NaiveBayes::readWords(const string& sw_file) {
@@ -145,20 +169,7 @@ vector<string> NaiveBayes::readWords(const string& sw_file) {
 	return data;
 }
 
-bool NaiveBayes::singleTest(const string& bow_review, bool use_bin) {
-	stringstream ss;
-	ss.str(bow_review);
-	ll rating;
-	ss >> rating;
-	bool is_pos;
-	if (rating <= neg_max) {
-		is_pos = false;
-	} else if (rating >= pos_min) {
-		is_pos = true;
-	} else {
-		cerr << "Unexpected Neutral: " << rating << "\n";
-		exit(0);
-	}
+bool NaiveBayes::classify(stringstream& ss, bool use_bin) {
 
 	ld pos_prob = log(static_cast<ld>(pos_reviews) / (pos_reviews + neg_reviews));
 	ld neg_prob = log(static_cast<ld>(neg_reviews) / (pos_reviews + neg_reviews));
@@ -176,9 +187,9 @@ bool NaiveBayes::singleTest(const string& bow_review, bool use_bin) {
 			pos_prob += log(words_prob[a].second.first);
 			neg_prob += log(words_prob[a].second.second);
 		} else {
-			pos_prob += b * log(words_prob[a].first.first);
-			neg_prob += b * log(words_prob[a].first.second);
+			pos_prob += (b * log(words_prob[a].first.first));
+			neg_prob += (b * log(words_prob[a].first.second));
 		}
 	}
-	return ((pos_prob >= neg_prob) == is_pos) ? true : false;
+	return (pos_prob >= neg_prob ? true : false);
 }

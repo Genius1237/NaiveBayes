@@ -30,8 +30,7 @@ private:
 	// Returns a vector of words
 	vector<string> readWords(const string& sw_file);
 
-	// Returns true if the classification is correct
-	bool singleTest(const string& bow_review, bool use_bin);
+	bool classify(stringstream& ss, bool use_bin);
 
 	// words_prob[0].first - without binarization 
 	// words_prob[0].second - with binarization
@@ -48,7 +47,5 @@ private:
 	int pos_min;
 	bool omit_sw;
 };
-
-
 
 #endif

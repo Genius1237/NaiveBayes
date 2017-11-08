@@ -18,23 +18,23 @@ int main() {
 	NaiveBayes nb1(neg_max, pos_min, train_bow_file, vocab_file, "");
 	cout << "Without binarization\n";
 	nb1.test(test_bow_file, false);
-	cout << "With binarization\n";
+	cout << "\nWith binarization\n";
 	nb1.test(test_bow_file, true);
 
 	cout << "\nShort stopwords list\n";
 	cout << "````````````````````\n";
 	NaiveBayes nb2(neg_max, pos_min, train_bow_file, vocab_file, short_sw_file);
-	cout << "Not using binarization\n";
+	cout << "Without binarization\n";
 	nb2.test(test_bow_file, false);
-	cout << "Using binarization\n";
+	cout << "\nWith binarization\n";
 	nb2.test(test_bow_file, true);
 
 	cout << "\nLong stopwords list\n";
 	cout << "```````````````````\n";
 	NaiveBayes nb3(neg_max, pos_min, train_bow_file, vocab_file, long_sw_file);
-	cout << "Not using binarization\n";
+	cout << "Without binarization\n";
 	nb3.test(test_bow_file, false);
-	cout << "Using binarization\n";
+	cout << "\nWith binarization\n";
 	nb3.test(test_bow_file, true);
 
 	return 0;
