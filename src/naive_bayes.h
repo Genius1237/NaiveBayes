@@ -37,6 +37,10 @@ public:
 	//   use_bin - true if binarization is to be used
 	void test(const string& test_bow_file, bool use_bin);
 
+	// Returns the most informative features
+	// Parameters:
+	// 	num - Number of features to return
+	//  use_bin - true if binarization is to be considered
 	vector<string> mostInformative(ll num, bool use_bin);
 
 private:

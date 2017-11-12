@@ -1,0 +1,5 @@
+Usage
+`````
+1. Change working directory to 'src'
+2. Compile using: g++ *cpp
+3. Run the executable: ./a.out
