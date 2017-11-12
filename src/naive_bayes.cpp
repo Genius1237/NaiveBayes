@@ -12,7 +12,7 @@ NaiveBayesClassifier::NaiveBayesClassifier() {
 }
 
 NaiveBayesClassifier::NaiveBayesClassifier(
-	int neg_max, int pos_min, const string& train_bow_file, 
+	int neg_max, int pos_min, const string& train_bow_file,
 	const string& vocab_file, const string& sw_file = "") {
 
 	// set some of the private variables
@@ -29,12 +29,12 @@ NaiveBayesClassifier::NaiveBayesClassifier(
 	ll vocab_size = vocab_words.size();
 
 	// Used to store word frequency
-	// words_freq[0].first - without binarization 
+	// words_freq[0].first - without binarization
 	// words_freq[0].second - with binarization
 	//                    .first - freq in positive reviews
 	//									  .second -  freq in negative reviews
 	vector<pair<pair<ll, ll>, pair<ll, ll>>> words_freq;
-	
+
 	// setup words_freq and words_prob
 	words_freq.resize(vocab_size);
 	words_prob.resize(vocab_size);
@@ -154,11 +154,11 @@ void NaiveBayesClassifier::test(const string& test_bow_file, bool use_bin) {
 	in.close();
 
 	// print statistics
-	cout << fixed << setprecision(4)
-	<< "Accuracy: " << ((tp + tn + 0.0) / (tp + tn + fp + fn)) * 100 << "%\n"
-	<< "Precision: " << (tp + 0.0) / (tp + fp) << "\n"
-	<< "Recall: " << (tp + 0.0) / (tp + fn) << "\n"
-	<< "F1 Measure: " << (2.0 * tp) / (2 * tp + fp + fn) << "\n";
+	cout << fixed << setprecision(6)
+	<< "Accuracy: " << (static_cast<double>(tp + tn) / (tp + tn + fp + fn)) * 100 << "%\n"
+	<< "Precision: " << (static_cast<double>(tp)) / (tp + fp) << "\n"
+	<< "Recall: " << (static_cast<double>(tp)) / (tp + fn) << "\n"
+	<< "F1 Measure: " << (2 * static_cast<double>(tp)) / (2 * tp + fp + fn) << "\n";
 }
 
 vector<string> NaiveBayesClassifier::readWords(const string& sw_file) {
@@ -178,7 +178,7 @@ bool NaiveBayesClassifier::classify(stringstream& bow_review_instance, bool use_
 	stringstream& ss = bow_review_instance;
 	ld pos_prob = log(static_cast<ld>(pos_reviews) / (pos_reviews + neg_reviews));
 	ld neg_prob = log(static_cast<ld>(neg_reviews) / (pos_reviews + neg_reviews));
-	
+
 	ll a, b;
 	char discard;
 	while (!ss.eof()) {
@@ -186,7 +186,7 @@ bool NaiveBayesClassifier::classify(stringstream& bow_review_instance, bool use_
 		ss.get(discard);
 		ss >> b;
 		ss.get(discard);
-		
+
 		// skip if this is a stopword
 		if (omit_sw && binary_search(stop_words.begin(), stop_words.end(), vocab_words[a])) {
 			continue;
