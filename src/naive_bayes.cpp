@@ -161,6 +161,20 @@ void NaiveBayesClassifier::test(const string& test_bow_file, bool use_bin) {
 	<< "F1 Measure: " << (2 * static_cast<double>(tp)) / (2 * tp + fp + fn) << "\n";
 }
 
+vector<string> NaiveBayesClassifier::mostInformative(ll num, bool use_bin) {
+	vector<pair<ld,ll>> temp;
+	for(int i =0 ;i<words_prob.size(); i++) {
+			if(!use_bin)
+				temp.push_back(make_pair(words_prob[i].first.first/words_prob[i].first.second),i);
+			else temp.push_back(make_pair(words_prob[i].second.first/words_prob[i].second.second),i);
+	}
+	sort(temp.begin(),temp.end());
+	reverse(temp.begin(),temp.end());
+	vector return_vec<string>;
+	for(int i=0; i<num; i++)	return_vec.push_back(vocab_words[temp[i].second]);
+	return return_vec;
+}
+
 vector<string> NaiveBayesClassifier::readWords(const string& sw_file) {
 	ifstream fin(sw_file,ios::in);
 	vector<string> data;

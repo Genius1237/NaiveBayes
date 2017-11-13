@@ -27,15 +27,17 @@ public:
 	//   vocab_file - Path to the file which contains the vocabulary
 	//   sw_file - Path to the file which contains the stopwords
 	NaiveBayesClassifier(
-		int neg_max, int pos_min, const string& train_bow_file, 
+		int neg_max, int pos_min, const string& train_bow_file,
 		const string& vocab_file, const string& sw_file);
-	
+
 	// Tests the trained Naive Bayes classifier and prints statistics
 	// Parameters:
 	//   test_bow_file - Path to the file which contains the testing data in
 	//                   Bag of Words format
 	//   use_bin - true if binarization is to be used
 	void test(const string& test_bow_file, bool use_bin);
+
+	vector<string> mostInformative(ll num, bool use_bin);
 
 private:
 	// Returns a vector of words read from a file
@@ -50,8 +52,8 @@ private:
 	//   use_bin - true if binarization is to be used
 	bool classify(stringstream& bow_review_instance, bool use_bin);
 
-	// Conditional probability of occurence of words given sentiment of review 
-	// words_prob[i].first - without binarization 
+	// Conditional probability of occurence of words given sentiment of review
+	// words_prob[i].first - without binarization
 	// words_prob[i].second - with binarization
 	//                    .first - prob given positive
 	//									  .second -  prob given negative
@@ -72,10 +74,10 @@ private:
 
 	// Maximum rating to be considered as a negative sentiment
 	int neg_max;
-	
+
 	// Minimum rating to be considered as a positive sentiment
 	int pos_min;
-	
+
 	// true if stopwords should be omitted
 	bool omit_sw;
 };
